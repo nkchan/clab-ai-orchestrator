@@ -1,77 +1,78 @@
-# リポジトリ構造
+# Repository Structure
 
-本プロジェクトのディレクトリ構成と、各コンポーネントの役割を解説します。
+Project directory layout and component responsibilities.
 
-## ディレクトリツリー
+## Directory Tree
 
 ```
 clab-ai-orchestrator/
 │
-├── agent.md                 # AI エージェント定義（行動規範・技術コンテキスト）
-├── README.md                # プロジェクト概要・クイックスタート
-├── docker-compose.yml       # mcp-bridge コンテナ管理
-├── .env.example             # 環境変数テンプレート
-├── .gitignore               # Git 除外設定
+├── agent.md                 # AI agent definition (behavior, tech context)
+├── README.md                # Project overview & quick start
+├── docker-compose.yml       # mcp-bridge container management
+├── .env.example             # Environment variable template
+├── .gitignore               # Git exclusions
 │
-├── setup/                   # 🔧 環境構築
-│   └── install.sh           #   Ubuntu 24.04 自動セットアップスクリプト
-│                            #   Docker, containerlab, vrnetlab, FRR を一括インストール
+├── setup/                   # 🔧 Environment Setup
+│   └── install.sh           #   Ubuntu 24.04 automated setup script
+│                            #   Installs Docker, containerlab, vrnetlab, FRR
 │
-├── images/                  # 📦 VM イメージ格納 (git管理外)
-│   └── .gitkeep             #   ディレクトリ構造のみ管理
-│                            #   ここに vJunos-router-*.qcow2 を配置する
+├── images/                  # 📦 VM Images (git-ignored)
+│   └── .gitkeep             #   Only directory structure is tracked
+│                            #   Place vJunos-router-*.qcow2 here
 │
-├── labs/                    # 🌐 containerlab トポロジ定義
-│   ├── README.md            #   ラボ一覧と使い方
-│   └── basic-bgp/           #   基本 eBGP ラボ (FRR + vJunos)
+├── labs/                    # 🌐 Containerlab Topology Definitions
+│   ├── README.md            #   Lab index
+│   └── basic-bgp/           #   Basic eBGP lab (FRR + vJunos)
 │       ├── topology.clab.yml
-│       └── configs/         #   ノード別初期コンフィグ
+│       └── configs/         #   Per-node initial configs
 │           ├── frr1/
 │           └── vjunos1/
 │
-├── samples/                 # 📝 使用例・シナリオ
-│   ├── README.md            #   サンプル一覧
-│   ├── 01_deploy_and_verify/ #  ラボデプロイ→BGP確認の基本フロー
-│   ├── 02_troubleshoot_bgp/ #   BGP障害の調査・修復シナリオ
-│   └── 03_config_change/    #   設定変更・ロールバックのシナリオ
+├── samples/                 # 📝 Usage Examples & Scenarios
+│   ├── README.md            #   Scenario index
+│   ├── 01_deploy_and_verify/ #  Lab deploy → BGP verification flow
+│   ├── 02_troubleshoot_bgp/ #   BGP fault investigation & repair
+│   └── 03_config_change/    #   Config change & rollback
 │
-├── mcp-bridge/              # 🐍 MCP サーバ (Python)
-│   ├── Dockerfile           #   コンテナイメージ定義
-│   ├── pyproject.toml       #   パッケージ定義
-│   ├── requirements.lock    #   依存バージョン完全固定
+├── mcp-bridge/              # 🐍 MCP Server (Python)
+│   ├── Dockerfile           #   Container image definition
+│   ├── pyproject.toml       #   Package definition
+│   ├── requirements.lock    #   Fully pinned dependencies
 │   ├── README.md
 │   └── src/mcp_bridge/
-│       ├── server.py        #   MCP サーバ本体 (STDIO)
-│       ├── tools/           #   MCP ツール実装
-│       │   ├── clab.py      #     containerlab 操作
-│       │   ├── frr.py       #     FRR vtysh 操作
-│       │   └── junos.py     #     vJunos CLI 操作
+│       ├── server.py        #   MCP server entry point (STDIO)
+│       ├── tools/           #   MCP tool implementations
+│       │   ├── clab.py      #     containerlab operations
+│       │   ├── frr.py       #     FRR vtysh operations
+│       │   └── junos.py     #     vJunos CLI operations
 │       └── utils/
-│           └── docker.py    #     Docker コンテナ実行ヘルパー
+│           └── docker.py    #     Docker exec helper
 │
-├── vendors/                 # 📊 ベンダー別モジュール
+├── vendors/                 # 📊 Vendor Modules
 │   ├── README.md
 │   ├── frr/
-│   │   ├── parser.py        #   FRR 出力パーサ (BGP summary, IP route)
-│   │   └── templates/       #   Jinja2 設定テンプレート
+│   │   ├── parser.py        #   FRR output parser (BGP summary, IP route)
+│   │   └── templates/       #   Jinja2 config templates
 │   └── junos/
-│       ├── parser.py        #   Junos 出力パーサ (text/JSON)
-│       └── templates/       #   Jinja2 設定テンプレート
+│       ├── parser.py        #   Junos output parser (text/JSON)
+│       └── templates/       #   Jinja2 config templates
 │
-└── docs/                    # 📚 ドキュメント
-    ├── repository-structure.md  # ← このファイル
-    ├── setup-guide.md           # 詳細セットアップ手順
-    ├── architecture.md          # アーキテクチャ設計・フロー図
-    ├── troubleshooting.md       # よくある問題と対処法
-    └── version-strategy.md      # バージョン管理戦略
+└── docs/                    # 📚 Documentation
+    ├── repository-structure.md  # ← This file
+    ├── setup-guide.md           # Detailed setup instructions
+    ├── architecture.md          # Architecture design & diagrams
+    ├── roadmap.md               # Project roadmap
+    ├── version-strategy.md      # Version pinning policy
+    └── troubleshooting.md       # Common issues & fixes
 ```
 
-## コンポーネント関係図
+## Component Relationships
 
 ```mermaid
 graph TB
-    subgraph "ユーザー操作"
-        USER["エンジニア / AI Agent"]
+    subgraph "User Interaction"
+        USER["Engineer / AI Agent"]
     end
 
     subgraph "samples/"
@@ -109,11 +110,11 @@ graph TB
     CONF --> FRR & VJUNOS
 ```
 
-## 新しいベンダーを追加するとき
+## Adding a New Vendor
 
-1. `vendors/<vendor>/parser.py` を作成
-2. `vendors/<vendor>/templates/` にテンプレート追加
-3. `mcp-bridge/src/mcp_bridge/tools/<vendor>.py` にツール実装
-4. `server.py` にツール登録
-5. `labs/` に対応トポロジを追加
-6. `samples/` に使用例を追加
+1. Create `vendors/<vendor>/parser.py`
+2. Add templates in `vendors/<vendor>/templates/`
+3. Implement tools in `mcp-bridge/src/mcp_bridge/tools/<vendor>.py`
+4. Register tools in `server.py`
+5. Add a corresponding topology in `labs/`
+6. Add usage examples in `samples/`

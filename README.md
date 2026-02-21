@@ -1,75 +1,70 @@
 # 🌐 Clab AI Orchestrator
 
-AIエージェントによるネットワーク検証自動化プラットフォーム。  
-[containerlab](https://containerlab.dev/) + FRRouting + vJunos-router を使用したハイブリッドネットワークラボを、MCP（Model Context Protocol）サーバ経由でAIから操作します。
+An AI-powered network lab automation platform.  
+Operate any [containerlab](https://containerlab.dev/) topology through MCP (Model Context Protocol) — deploy, verify, troubleshoot, and document, all driven by AI.
 
-## 🏗 アーキテクチャ
+## 🏗 Architecture
 
 ```mermaid
 graph TB
     subgraph "AI Layer"
-        AI["AI Agent<br/>(Open WebUI)"]
+        AI["AI Agent<br/>(Open WebUI / LLM Client)"]
     end
 
     subgraph "MCP Layer"
         MCP["mcp-bridge<br/>(Python / STDIO)"]
+        TOOLS["Vendor Tools<br/>FRR · Junos · ..."]
+        MCP --> TOOLS
     end
 
     subgraph "Infrastructure Layer"
         CLAB["containerlab"]
-        FRR["FRR<br/>(AS65001)"]
-        VJUNOS["vJunos-router<br/>(AS65002)"]
-
-        CLAB --> FRR
-        CLAB --> VJUNOS
-        FRR --- |"P2P BGP"| VJUNOS
+        TOPO["Any Topology<br/>(multi-vendor, multi-protocol)"]
+        CLAB --> TOPO
     end
 
     AI --> MCP
-    MCP --> CLAB
-    MCP --> FRR
-    MCP --> VJUNOS
+    TOOLS --> CLAB
 ```
 
-## ⚡ クイックスタート
+## ⚡ Quick Start
 
-### 前提条件
+### Prerequisites
 
 - Ubuntu 24.04
-- sudo 権限
-- vJunos-router QCOW2 イメージ（[Juniper](https://www.juniper.net/) からダウンロード）
+- sudo privileges
+- NOS images (e.g., vJunos-router QCOW2 from [Juniper](https://www.juniper.net/))
 
-### 1. セットアップ
+### 1. Setup
 
 ```bash
-# リポジトリをクローン
 git clone https://github.com/<your-org>/clab-ai-orchestrator.git
 cd clab-ai-orchestrator
 
-# vJunos イメージを配置
+# Place NOS images
 cp /path/to/vJunos-router-25.4R1.12.qcow2 images/
 
-# セットアップスクリプトを実行
+# Run setup script
 sudo bash setup/install.sh
 ```
 
-### 2. ラボをデプロイ
+### 2. Deploy a Lab
 
 ```bash
 sudo clab deploy -t labs/basic-bgp/topology.clab.yml
 ```
 
-### 3. 疎通確認
+### 3. Verify
 
 ```bash
-# FRR の BGP 状態
+# FRR BGP status
 docker exec clab-basic-bgp-frr1 vtysh -c "show ip bgp summary"
 
-# vJunos の BGP 状態
+# vJunos BGP status
 docker exec clab-basic-bgp-vjunos1 cli show bgp summary
 ```
 
-### 4. MCP Bridge を起動
+### 4. Start MCP Bridge
 
 ```bash
 cd mcp-bridge
@@ -77,42 +72,52 @@ pip install -e .
 mcp-bridge  # STDIO mode
 ```
 
-## 📂 プロジェクト構造
+Or run in Docker:
+
+```bash
+docker compose up -d
+```
+
+## 📂 Project Structure
 
 ```
-├── agent.md              # AI エージェント定義
-├── setup/                # セットアップスクリプト
-├── labs/                 # containerlab トポロジ定義
-│   └── basic-bgp/        # FRR + vJunos P2P BGP ラボ
-├── mcp-bridge/           # MCP サーバ (Python)
+├── agent.md              # AI agent definition
+├── setup/                # Setup scripts
+├── labs/                 # Containerlab topology definitions
+│   └── basic-bgp/        # FRR + vJunos P2P BGP lab
+├── mcp-bridge/           # MCP server (Python)
 │   └── src/mcp_bridge/
-│       ├── server.py      # メインサーバ
-│       └── tools/         # clab / frr / junos ツール
-├── vendors/              # ベンダー別パーサ・テンプレート
+│       ├── server.py      # Main server
+│       └── tools/         # clab / frr / junos tools
+├── vendors/              # Vendor-specific parsers & templates
 │   ├── frr/
 │   └── junos/
-├── images/               # VM イメージ (git管理外)
-└── docs/                 # ドキュメント
+├── samples/              # Usage examples & scenarios
+├── images/               # VM images (git-ignored)
+└── docs/                 # Documentation
 ```
 
-## 🔧 MCP ツール一覧
+## 🔧 MCP Tools
 
-| ツール | 説明 |
-|--------|------|
-| `clab_deploy` | containerlab トポロジをデプロイ |
-| `clab_destroy` | トポロジを破棄 |
-| `clab_inspect` | ノード状態を確認 |
-| `frr_show` | FRR で show コマンドを実行 |
-| `frr_config` | FRR に設定を投入 |
-| `junos_show` | vJunos で show コマンドを実行 |
-| `junos_config` | vJunos に設定を投入 |
+| Tool | Description |
+|------|-------------|
+| `clab_deploy` | Deploy a containerlab topology |
+| `clab_destroy` | Destroy a topology |
+| `clab_inspect` | Inspect node status |
+| `frr_show` | Execute show commands on FRR nodes |
+| `frr_config` | Push configuration to FRR nodes |
+| `junos_show` | Execute show commands on vJunos nodes |
+| `junos_config` | Push configuration to vJunos nodes |
 
-## 📚 ドキュメント
+## 📚 Documentation
 
-- [セットアップガイド](docs/setup-guide.md) - 詳細インストール手順
-- [アーキテクチャ](docs/architecture.md) - 設計思想と構成
-- [トラブルシューティング](docs/troubleshooting.md) - よくある問題と対処法
+- [Setup Guide](docs/setup-guide.md) — Detailed installation steps
+- [Architecture](docs/architecture.md) — Design and component overview
+- [Repository Structure](docs/repository-structure.md) — Directory layout explained
+- [Roadmap](docs/roadmap.md) — Project roadmap
+- [Version Strategy](docs/version-strategy.md) — Dependency pinning policy
+- [Troubleshooting](docs/troubleshooting.md) — Common issues and fixes
 
-## 📄 ライセンス
+## 📄 License
 
 MIT License

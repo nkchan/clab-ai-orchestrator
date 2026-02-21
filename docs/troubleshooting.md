@@ -1,51 +1,51 @@
-# トラブルシューティング
+# Troubleshooting
 
-## containerlab 関連
+## containerlab
 
-### `clab deploy` が失敗する
+### `clab deploy` fails
 
-**症状**: Permission denied エラー
+**Symptom**: Permission denied error
 
 ```bash
-# sudo で実行する
+# Run with sudo
 sudo clab deploy -t labs/basic-bgp/topology.clab.yml
 ```
 
-### vJunos ノードが起動しない
+### vJunos node doesn't start
 
-**症状**: `clab inspect` でノードが `running` にならない
+**Symptom**: Node not showing `running` in `clab inspect`
 
-1. Docker イメージの確認:
+1. Check Docker image:
 ```bash
 docker images | grep vjunos
 ```
 
-2. イメージが無い場合は vrnetlab でビルド:
+2. If image is missing, build with vrnetlab:
 ```bash
 cp images/vJunos-router-25.4R1.12.qcow2 /opt/vrnetlab/vjunos-router/
 cd /opt/vrnetlab/vjunos-router && sudo make
 ```
 
-3. vJunos は起動に **3〜5分** かかる場合があります。しばらく待ってから再確認してください。
+3. vJunos may take **3–5 minutes** to boot. Wait and re-check.
 
-### ラボが残っている
+### Stale lab remains
 
 ```bash
-# 状態確認
+# Check all labs
 sudo clab inspect --all
 
-# 特定ラボの破棄
+# Destroy specific lab
 sudo clab destroy -t labs/basic-bgp/topology.clab.yml
 
-# クリーンアップ付き
+# Destroy with cleanup
 sudo clab destroy -t labs/basic-bgp/topology.clab.yml --cleanup
 ```
 
-## BGP 関連
+## BGP
 
-### BGP ネイバーが Established にならない
+### BGP neighbor not establishing
 
-1. **IP アドレス確認**:
+1. **Check IP addresses**:
 ```bash
 # FRR
 docker exec clab-basic-bgp-frr1 vtysh -c "show interface brief"
@@ -54,12 +54,12 @@ docker exec clab-basic-bgp-frr1 vtysh -c "show interface brief"
 docker exec clab-basic-bgp-vjunos1 cli show interfaces terse
 ```
 
-2. **疎通確認**:
+2. **Check reachability**:
 ```bash
 docker exec clab-basic-bgp-frr1 ping -c 3 192.0.2.2
 ```
 
-3. **BGP 詳細ログ**:
+3. **Check BGP details**:
 ```bash
 # FRR
 docker exec clab-basic-bgp-frr1 vtysh -c "show ip bgp neighbor 192.0.2.2"
@@ -68,9 +68,9 @@ docker exec clab-basic-bgp-frr1 vtysh -c "show ip bgp neighbor 192.0.2.2"
 docker exec clab-basic-bgp-vjunos1 cli show bgp neighbor 192.0.2.1
 ```
 
-## mcp-bridge 関連
+## mcp-bridge
 
-### インストールエラー
+### Installation error
 
 ```bash
 cd mcp-bridge
@@ -79,10 +79,10 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-### MCP サーバが起動しない
+### MCP server won't start
 
-- Python 3.10 以上が必要です
-- `mcp` パッケージが正しくインストールされているか確認:
+- Requires Python 3.10+
+- Verify `mcp` package is installed:
 ```bash
 pip show mcp
 ```

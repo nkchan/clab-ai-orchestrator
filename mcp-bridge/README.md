@@ -1,8 +1,8 @@
 # MCP Bridge
 
-containerlab / FRR / vJunos-router を操作するための MCP (Model Context Protocol) サーバ。
+MCP (Model Context Protocol) server for operating containerlab / FRR / vJunos-router.
 
-## セットアップ
+## Setup
 
 ```bash
 python3 -m venv .venv
@@ -10,31 +10,31 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## 起動
+## Run
 
 ```bash
-# STDIO モード
+# STDIO mode
 mcp-bridge
 ```
 
-## 提供ツール
+## Available Tools
 
-| ツール | 説明 |
-|--------|------|
-| `clab_deploy` | containerlab トポロジをデプロイ |
-| `clab_destroy` | トポロジを破棄 |
-| `clab_inspect` | ノード状態を確認 |
-| `frr_show` | FRR で show コマンドを実行 |
-| `frr_config` | FRR に設定を投入 |
-| `junos_show` | vJunos で show コマンドを実行 |
-| `junos_config` | vJunos に設定を投入 |
+| Tool | Description |
+|------|-------------|
+| `clab_deploy` | Deploy a containerlab topology |
+| `clab_destroy` | Destroy a topology |
+| `clab_inspect` | Inspect node status |
+| `frr_show` | Execute show commands on FRR |
+| `frr_config` | Push configuration to FRR |
+| `junos_show` | Execute show commands on vJunos |
+| `junos_config` | Push configuration to vJunos |
 
-## 開発
+## Development
 
 ```bash
-# lint
+# Lint
 ruff check src/
 
-# テスト
+# Test
 pytest
 ```

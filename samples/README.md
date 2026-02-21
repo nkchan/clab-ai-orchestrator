@@ -1,22 +1,22 @@
-# Samples - 使用例・シナリオ集
+# Samples — Usage Examples & Scenarios
 
-本ディレクトリには、Clab AI Orchestrator の具体的な使い方をシナリオ別にまとめています。  
-各シナリオは独立しており、順番に実行することでプロジェクトの全機能を体験できます。
+This directory contains concrete usage scenarios for Clab AI Orchestrator.  
+Each scenario is self-contained and can be followed sequentially to experience all features.
 
-## シナリオ一覧
+## Scenario Index
 
-| # | シナリオ | 内容 | 対象ツール |
-|---|---------|------|-----------|
-| 01 | [Deploy & Verify](01_deploy_and_verify/) | ラボの構築から BGP 疎通確認まで | `clab_deploy`, `clab_inspect`, `frr_show`, `junos_show` |
-| 02 | [Troubleshoot BGP](02_troubleshoot_bgp/) | BGP 障害の調査と修復 | `frr_show`, `junos_show`, `frr_config`, `junos_config` |
-| 03 | [Config Change](03_config_change/) | 設定変更とロールバック | `frr_config`, `junos_config`, テンプレート |
+| # | Scenario | Description | Tools Used |
+|---|----------|-------------|------------|
+| 01 | [Deploy & Verify](01_deploy_and_verify/) | Lab deployment → BGP verification | `clab_deploy`, `clab_inspect`, `frr_show`, `junos_show` |
+| 02 | [Troubleshoot BGP](02_troubleshoot_bgp/) | BGP fault investigation & repair | `frr_show`, `junos_show`, `frr_config`, `junos_config` |
+| 03 | [Config Change](03_config_change/) | Configuration change & rollback | `frr_config`, `junos_config`, templates |
 
-## 前提条件
+## Prerequisites
 
-- `sudo clab deploy -t labs/basic-bgp/topology.clab.yml` でラボがデプロイ済み
-- BGP が Established 状態
+- Lab deployed: `sudo clab deploy -t labs/basic-bgp/topology.clab.yml`
+- BGP in Established state
 
-## 使い方
+## How to Use
 
-各シナリオの `README.md` に手順が記載されています。  
-MCP ツール経由（AI エージェント）でも、手動の CLI でも実行できます。
+Each scenario has a `README.md` with step-by-step instructions.  
+They can be executed via MCP tools (AI agent) or manual CLI commands.
