@@ -1,36 +1,36 @@
 # Vendors
 
-ベンダー固有のパーサと設定テンプレートを格納するモジュール。
+Vendor-specific parsers and configuration templates.
 
-## 構造
+## Structure
 
 ```
 vendors/
 ├── frr/
-│   ├── parser.py          # FRR show コマンド出力パーサ
+│   ├── parser.py          # FRR show command output parser
 │   └── templates/
-│       └── bgp.conf.j2    # BGP 設定テンプレート
+│       └── bgp.conf.j2    # BGP config template
 └── junos/
-    ├── parser.py          # Junos show コマンド出力パーサ
+    ├── parser.py          # Junos show command output parser
     └── templates/
-        └── bgp.conf.j2    # BGP 設定テンプレート
+        └── bgp.conf.j2    # BGP config template
 ```
 
-## パーサ
+## Parsers
 
 ### FRR (`frr/parser.py`)
-- `parse_bgp_summary()` - `show ip bgp summary` の出力を構造化
-- `parse_ip_route()` - `show ip route` の出力を構造化
+- `parse_bgp_summary()` — Parses `show ip bgp summary` into structured data
+- `parse_ip_route()` — Parses `show ip route` into structured data
 
 ### Junos (`junos/parser.py`)
-- `parse_bgp_summary()` - `show bgp summary` の出力を構造化 (text/JSON)
-- `parse_route_table()` - `show route` の出力を構造化
+- `parse_bgp_summary()` — Parses `show bgp summary` (text/JSON) into structured data
+- `parse_route_table()` — Parses `show route` into structured data
 
-## テンプレート
+## Templates
 
-Jinja2 形式の設定テンプレート。新しいラボ構成を作成する際に使用。
+Jinja2-format configuration templates for generating new lab configs.
 
-### 使用例
+### Usage Example
 ```python
 from jinja2 import Environment, FileSystemLoader
 
@@ -48,9 +48,9 @@ config = template.render(
 )
 ```
 
-## 新しいベンダーの追加
+## Adding a New Vendor
 
-1. `vendors/<vendor_name>/` ディレクトリを作成
-2. `parser.py` に show コマンドパーサを実装
-3. `templates/` に Jinja2 テンプレートを追加
-4. `mcp-bridge/src/mcp_bridge/tools/` に対応ツールを追加
+1. Create `vendors/<vendor_name>/` directory
+2. Implement `parser.py` with show command parsers
+3. Add Jinja2 templates in `templates/`
+4. Add corresponding tools in `mcp-bridge/src/mcp_bridge/tools/`

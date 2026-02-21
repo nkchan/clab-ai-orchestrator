@@ -1,40 +1,40 @@
-# セットアップガイド
+# Setup Guide
 
-Ubuntu 24.04 での環境構築手順。
+Environment setup on Ubuntu 24.04.
 
-## 前提条件
+## Prerequisites
 
 - Ubuntu 24.04 LTS
-- sudo 権限
-- インターネット接続
-- vJunos-router QCOW2 イメージ
+- sudo privileges
+- Internet connection
+- vJunos-router QCOW2 image
 
-## 自動セットアップ
+## Automated Setup
 
 ```bash
 sudo bash setup/install.sh
 ```
 
-このスクリプトは以下をインストールします:
-1. **Docker** - コンテナ実行環境
-2. **containerlab** - ネットワークラボオーケストレータ
-3. **FRR イメージ** - `quay.io/frrouting/frr:10.3.1`
-4. **vrnetlab** - vJunos QCOW2 → Docker イメージ変換
-5. **Python 3** - mcp-bridge 実行環境
+This script installs:
+1. **Docker** — Container runtime
+2. **containerlab** — Network lab orchestrator
+3. **FRR image** — `quay.io/frrouting/frr:10.3.1`
+4. **vrnetlab** — Converts vJunos QCOW2 → Docker image
+5. **Python 3** — Runtime for mcp-bridge
 
-## vJunos-router イメージの準備
+## Preparing the vJunos-router Image
 
-### 1. ダウンロード
-[Juniper サポートサイト](https://support.juniper.net/) から `vJunos-router-*.qcow2` をダウンロード。
+### 1. Download
+Download `vJunos-router-*.qcow2` from [Juniper Support](https://support.juniper.net/).
 
-### 2. 配置
+### 2. Place
 ```bash
 cp vJunos-router-25.4R1.12.qcow2 images/
 ```
 
-### 3. Docker イメージビルド
-`setup/install.sh` を実行すると自動で vrnetlab によるビルドが行われます。  
-手動で行う場合:
+### 3. Build Docker Image
+Running `setup/install.sh` will automatically build via vrnetlab.  
+To build manually:
 
 ```bash
 cp images/vJunos-router-25.4R1.12.qcow2 /opt/vrnetlab/vjunos-router/
@@ -42,13 +42,13 @@ cd /opt/vrnetlab/vjunos-router
 sudo make
 ```
 
-### 4. 確認
+### 4. Verify
 ```bash
 docker images | grep vjunos
 # vrnetlab/vr-vjunos   25.4R1.12   ...
 ```
 
-## mcp-bridge のセットアップ
+## Setting Up mcp-bridge
 
 ```bash
 cd mcp-bridge
@@ -57,16 +57,16 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-## 動作確認
+## Smoke Test
 
 ```bash
-# ラボデプロイ
+# Deploy lab
 sudo clab deploy -t labs/basic-bgp/topology.clab.yml
 
-# ノード確認
+# Inspect nodes
 sudo clab inspect -t labs/basic-bgp/topology.clab.yml
 
-# BGP 確認
+# Check BGP
 docker exec clab-basic-bgp-frr1 vtysh -c "show ip bgp summary"
 docker exec clab-basic-bgp-vjunos1 cli show bgp summary
 ```

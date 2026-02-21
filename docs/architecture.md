@@ -1,6 +1,6 @@
-# アーキテクチャ
+# Architecture
 
-## 全体構成
+## Overview
 
 ```mermaid
 graph TB
@@ -20,8 +20,8 @@ graph TB
     end
 
     subgraph "containerlab"
-        FRR1["FRR1<br/>AS65001"]
-        VJUNOS1["vJunos1<br/>AS65002"]
+        FRR1["FRR"]
+        VJUNOS1["vJunos"]
         FRR1 ---|"eBGP"| VJUNOS1
     end
 
@@ -33,27 +33,27 @@ graph TB
     JUNOS_TOOL --> |"docker exec cli"| VJUNOS1
 ```
 
-## コンポーネント
+## Components
 
 ### mcp-bridge
-- **役割**: AI エージェントとネットワーク機器の仲介
-- **通信方式**: STDIO (将来 HTTP+SSE 追加可能)
-- **言語**: Python (mcp SDK)
-- **ツール**: containerlab 操作、FRR 操作、Junos 操作
+- **Role**: Mediates between AI agents and network devices
+- **Transport**: STDIO (HTTP+SSE can be added later)
+- **Language**: Python (mcp SDK)
+- **Tools**: containerlab operations, FRR operations, Junos operations
 
 ### vendors/
-- **役割**: ベンダー固有の出力パーサと設定テンプレート
-- **FRR**: vtysh 出力の正規表現パーサ
-- **Junos**: text / JSON 両対応パーサ
-- **テンプレート**: Jinja2 形式の設定テンプレート
+- **Role**: Vendor-specific output parsers and configuration templates
+- **FRR**: Regex-based parsers for vtysh output
+- **Junos**: Parsers supporting both text and JSON (`| display json`)
+- **Templates**: Jinja2-format configuration templates
 
 ### labs/
-- **役割**: containerlab トポロジ定義と初期コンフィグ
-- **basic-bgp**: FRR + vJunos の最小 eBGP 構成
+- **Role**: Containerlab topology definitions and initial configs
+- **basic-bgp**: Minimal eBGP topology with FRR + vJunos
 
-## 設計方針
+## Design Principles
 
-1. **State-First**: 変更前後で必ず状態を確認
-2. **Docs-as-Code**: コードとドキュメントを同期
-3. **ベンダー抽象化**: vendors/ でベンダー固有ロジックを分離し、新OS追加を容易に
-4. **安全性**: show コマンドのみ frr_show/junos_show で許可、設定変更は明示的なツールを使用
+1. **State-First**: Always verify state before and after changes
+2. **Docs-as-Code**: Keep code and documentation in sync
+3. **Vendor Abstraction**: Isolate vendor-specific logic in `vendors/` for easy NOS additions
+4. **Safety**: Only `show` commands via `*_show` tools; config changes require explicit `*_config` tools

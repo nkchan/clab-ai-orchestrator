@@ -1,19 +1,19 @@
 # Sample 03: Config Change
 
-Jinja2 テンプレートを使って設定を生成し、FRR / vJunos に投入するシナリオ。
+Use Jinja2 templates to generate configs, push to FRR/vJunos, and verify propagation.
 
-## シナリオ概要
+## Scenario
 
-既存の BGP 設定に加えて、新しい Loopback ネットワークを追加広告します。
+Add a new loopback network to FRR1's BGP advertisements.
 
 ```
-変更前: FRR1 → 10.0.0.1/32 のみ広告
-変更後: FRR1 → 10.0.0.1/32 + 10.1.0.0/24 を広告
+Before: FRR1 advertises 10.0.0.1/32 only
+After:  FRR1 advertises 10.0.0.1/32 + 10.1.0.0/24
 ```
 
-## 手順
+## Steps
 
-### Step 1: 現在の経路を確認
+### Step 1: Check Current Routes
 
 ```json
 {
@@ -25,17 +25,16 @@ Jinja2 テンプレートを使って設定を生成し、FRR / vJunos に投入
 }
 ```
 
-**期待される出力:** 10.0.0.1/32 のみ
+**Expected:** Only 10.0.0.1/32
 
-### Step 2: テンプレートで設定を生成
+### Step 2: Generate Config from Template
 
 ```python
-# vendors/frr/templates を使った設定生成の例
+# Example using vendors/frr/templates
 from jinja2 import Environment, FileSystemLoader
 
 env = Environment(loader=FileSystemLoader("vendors/frr/templates"))
 
-# 追加ネットワーク用のカスタムテンプレートも作成可能
 config_lines = [
     "router bgp 65001",
     "address-family ipv4 unicast",
@@ -44,9 +43,9 @@ config_lines = [
 ]
 ```
 
-### Step 3: FRR に設定を投入
+### Step 3: Push Config to FRR
 
-**MCP ツール:**
+**MCP Tool:**
 ```json
 {
   "tool": "frr_config",
@@ -65,7 +64,7 @@ config_lines = [
 }
 ```
 
-### Step 4: 広告を確認
+### Step 4: Verify Advertisement
 
 ```json
 {
@@ -77,7 +76,7 @@ config_lines = [
 }
 ```
 
-### Step 5: vJunos 側で受信を確認
+### Step 5: Verify Reception on vJunos
 
 ```json
 {
@@ -89,11 +88,9 @@ config_lines = [
 }
 ```
 
-**期待される出力:** 10.0.0.1/32 + 10.1.0.0/24
+**Expected:** 10.0.0.1/32 + 10.1.0.0/24
 
-### Step 6: ロールバック
-
-設定を元に戻す。
+### Step 6: Rollback
 
 ```json
 {
@@ -113,9 +110,9 @@ config_lines = [
 }
 ```
 
-## 学べること
+## What You Learn
 
-- Jinja2 テンプレートを使った設定生成
-- ネットワーク追加広告の流れ
-- FRR / Junos 間での経路伝搬確認
-- 設定のロールバック方法
+- Using Jinja2 templates for config generation
+- Network advertisement workflow
+- Cross-vendor route propagation verification (FRR ↔ Junos)
+- Configuration rollback

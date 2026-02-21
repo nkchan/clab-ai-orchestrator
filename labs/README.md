@@ -1,11 +1,11 @@
 # Labs
 
-containerlab トポロジ定義と初期設定ファイル。
+Containerlab topology definitions and initial configuration files.
 
-## 利用可能なラボ
+## Available Labs
 
 ### basic-bgp
-FRR + vJunos-router の最小 eBGP 構成。
+Minimal eBGP topology with FRR + vJunos-router.
 
 ```
 FRR1 (AS65001, 192.0.2.1/30) ---- P2P ---- vJunos1 (AS65002, 192.0.2.2/30)
@@ -13,12 +13,12 @@ FRR1 (AS65001, 192.0.2.1/30) ---- P2P ---- vJunos1 (AS65002, 192.0.2.2/30)
 ```
 
 ```bash
-# デプロイ
+# Deploy
 sudo clab deploy -t labs/basic-bgp/topology.clab.yml
 
-# 確認
+# Inspect
 sudo clab inspect -t labs/basic-bgp/topology.clab.yml
 
-# 破棄
+# Destroy
 sudo clab destroy -t labs/basic-bgp/topology.clab.yml
 ```

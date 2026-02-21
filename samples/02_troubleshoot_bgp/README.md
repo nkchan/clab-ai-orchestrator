@@ -1,30 +1,29 @@
 # Sample 02: Troubleshoot BGP
 
-BGP ピアリングが確立しない障害を調査し、修復するシナリオ。
+Investigate and repair a BGP peering failure.
 
-## シナリオ概要
+## Scenario
 
-FRR1 の BGP ネイバー設定を意図的に間違え、障害を発生させた後、
-AIエージェント（または手動）で原因を特定し修復します。
+Intentionally misconfigure FRR1's BGP neighbor, then use AI agents (or manual steps) to identify the root cause and repair it.
 
 ```mermaid
 flowchart TD
-    A["🔴 BGP Down"] --> B["1. 症状確認"]
-    B --> C["2. L1/L2 確認: 物理接続OK?"]
-    C --> D["3. L3 確認: IP reachability OK?"]
-    D --> E["4. BGP 確認: ネイバー設定は正しい?"]
-    E --> F["5. 原因特定: AS番号ミス"]
-    F --> G["6. 修復: 正しいAS番号に変更"]
+    A["🔴 BGP Down"] --> B["1. Check symptoms"]
+    B --> C["2. L1/L2: Physical connectivity OK?"]
+    C --> D["3. L3: IP reachability OK?"]
+    D --> E["4. BGP: Neighbor config correct?"]
+    E --> F["5. Root cause: AS number mismatch"]
+    F --> G["6. Fix: Correct the AS number"]
     G --> H["🟢 BGP Established"]
 ```
 
-## 手順
+## Steps
 
-### Step 1: 障害を発生させる
+### Step 1: Inject the Fault
 
-FRR1 のネイバー設定で **間違った**リモートAS番号を設定する。
+Set an **incorrect** remote AS number on FRR1.
 
-**MCP ツール:**
+**MCP Tool:**
 ```json
 {
   "tool": "frr_config",
@@ -39,16 +38,7 @@ FRR1 のネイバー設定で **間違った**リモートAS番号を設定す�
 }
 ```
 
-**手動 CLI:**
-```bash
-docker exec clab-basic-bgp-frr1 vtysh -c "conf t" \
-  -c "router bgp 65001" \
-  -c "no neighbor 192.0.2.2 remote-as 65002" \
-  -c "neighbor 192.0.2.2 remote-as 65099" \
-  -c "end"
-```
-
-### Step 2: 症状を確認
+### Step 2: Observe the Symptom
 
 ```json
 {
@@ -60,32 +50,32 @@ docker exec clab-basic-bgp-frr1 vtysh -c "conf t" \
 }
 ```
 
-**期待される出力:** State が `OpenSent` / `Active` (Established でない)
+**Expected:** State shows `OpenSent` / `Active` (not Established)
 
-### Step 3: 調査ワークフロー
+### Step 3: Investigation Workflow
 
-AIエージェントが自律的に行う場合の調査フロー:
+When an AI agent investigates autonomously:
 
 ```
 1. frr_show → "show ip bgp summary"
-   → ネイバーが Established でない
+   → Neighbor is NOT Established
 
 2. frr_show → "show ip bgp neighbor 192.0.2.2"
-   → "remote AS 65099" が表示される
-   → "Last error: ...Bad peer AS" が表示される
+   → Shows "remote AS 65099"
+   → Shows "Last error: ...Bad peer AS"
 
 3. junos_show → "show bgp summary"
-   → vJunos 側も Established でない
+   → vJunos side also NOT Established
 
-4. 比較推論:
-   → FRR 側: remote-as 65099
-   → vJunos 側: local-as 65002
-   → ミスマッチが原因と判断
+4. Reasoning:
+   → FRR side: remote-as 65099
+   → vJunos side: local-as 65002
+   → Mismatch identified as root cause
 ```
 
-### Step 4: 修復
+### Step 4: Repair
 
-**MCP ツール:**
+**MCP Tool:**
 ```json
 {
   "tool": "frr_config",
@@ -100,7 +90,7 @@ AIエージェントが自律的に行う場合の調査フロー:
 }
 ```
 
-### Step 5: 復旧確認
+### Step 5: Verify Recovery
 
 ```json
 {
@@ -112,10 +102,10 @@ AIエージェントが自律的に行う場合の調査フロー:
 }
 ```
 
-**期待される出力:** State が `Established` に復旧
+**Expected:** State returns to `Established`
 
-## 学べること
+## What You Learn
 
-- BGP の障害調査フロー（L1→L2→L3→L4）
-- `show ip bgp neighbor` の "Last error" から原因を特定する方法
-- MCP ツール経由での設定変更・自動修復
+- BGP investigation flow (L1 → L2 → L3 → L4)
+- Using `show ip bgp neighbor` "Last error" to identify root cause
+- Automated config repair via MCP tools
