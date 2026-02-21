@@ -130,18 +130,21 @@ else
     fi
     info "vrnetlab ready at $VRNETLAB_DIR"
 
+    # vrnetlab path: juniper/vjunosrouter (no hyphens)
+    VJUNOS_BUILD_DIR="$VRNETLAB_DIR/juniper/vjunosrouter"
+
     # Look for vJunos QCOW2
     IMAGES_DIR="${PROJECT_ROOT}/images"
     VJUNOS_QCOW=$(find "$IMAGES_DIR" -name "vJunos-router-*.qcow2" 2>/dev/null | head -1)
 
-    if docker images | grep -q "vrnetlab/vr-vjunos"; then
+    if docker images --format '{{.Repository}}' | grep -q "vrnetlab/vr-vjunosrouter"; then
         info "vJunos Docker image already exists"
     elif [[ -n "$VJUNOS_QCOW" ]]; then
         info "Found QCOW2: $(basename "$VJUNOS_QCOW")"
         info "Building Docker image (this takes 5-10 minutes)..."
-        cp "$VJUNOS_QCOW" "$VRNETLAB_DIR/vjunos-router/"
-        cd "$VRNETLAB_DIR/vjunos-router"
-        make 2>&1 | tail -5
+        cp "$VJUNOS_QCOW" "$VJUNOS_BUILD_DIR/"
+        cd "$VJUNOS_BUILD_DIR"
+        make 2>&1 | tail -10
         info "vJunos Docker image built successfully"
     else
         warn "No vJunos-router QCOW2 found in $IMAGES_DIR"
@@ -189,7 +192,7 @@ echo "║  FRR:          $FRR_IMAGE"
 echo "║  Python:       $(python3 --version | grep -oP '\d+\.\d+\.\d+')"
 echo "║  mcp-bridge:   $VENV_DIR"
 
-if docker images | grep -q "vrnetlab/vr-vjunos"; then
+if docker images --format '{{.Repository}}' | grep -q "vrnetlab/vr-vjunosrouter"; then
     echo "║  vJunos:       ✅ Docker image ready"
 else
     echo "║  vJunos:       ⚠️  QCOW2 image needed"
