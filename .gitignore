@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# VM Images (licensed binaries - do not commit)
+images/*
+!images/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+
+# containerlab
+clab-*/
+.clab/
+
+# Environment
+.env
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

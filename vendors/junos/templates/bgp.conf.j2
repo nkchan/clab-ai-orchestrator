@@ -1,0 +1,69 @@
+{# Junos BGP Configuration Template
+   ===================================
+   Variables:
+     {{ hostname }}     - Node hostname
+     {{ router_id }}    - BGP Router ID (loopback IP)
+     {{ local_as }}     - Local AS number
+     {{ neighbor_ip }}  - BGP neighbor IP
+     {{ remote_as }}    - Remote AS number
+     {{ loopback_ip }}  - Loopback interface IP (/32)
+     {{ p2p_ip }}       - P2P interface IP (/30)
+     {{ p2p_interface }} - P2P interface name (e.g., eth1)
+#}
+system {
+    host-name {{ hostname }};
+    services {
+        ssh;
+        netconf {
+            ssh;
+        }
+    }
+}
+
+interfaces {
+    {{ p2p_interface }} {
+        unit 0 {
+            family inet {
+                address {{ p2p_ip }};
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address {{ loopback_ip }};
+            }
+        }
+    }
+}
+
+routing-options {
+    router-id {{ router_id }};
+    autonomous-system {{ local_as }};
+}
+
+protocols {
+    bgp {
+        group ebgp-peer {
+            type external;
+            peer-as {{ remote_as }};
+            neighbor {{ neighbor_ip }};
+            export advertise-loopback;
+        }
+    }
+}
+
+policy-options {
+    policy-statement advertise-loopback {
+        term loopback {
+            from {
+                protocol direct;
+                route-filter {{ loopback_ip }} exact;
+            }
+            then accept;
+        }
+        term default {
+            then reject;
+        }
+    }
+}

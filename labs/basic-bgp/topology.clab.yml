@@ -1,0 +1,25 @@
+# Basic BGP Lab: FRR + vJunos-router
+# ====================================
+# Topology:
+#   FRR1 (AS65001) ---- P2P ---- vJunos1 (AS65002)
+#   192.0.2.1/30                  192.0.2.2/30
+#   Lo: 10.0.0.1/32              Lo: 10.0.0.2/32
+
+name: basic-bgp
+
+topology:
+  nodes:
+    frr1:
+      kind: linux
+      image: quay.io/frrouting/frr:10.3.1
+      binds:
+        - configs/frr1/daemons:/etc/frr/daemons
+        - configs/frr1/frr.conf:/etc/frr/frr.conf
+
+    vjunos1:
+      kind: juniper_vjunos
+      image: vrnetlab/vr-vjunos:25.4R1.12
+      startup-config: configs/vjunos1/juniper.conf
+
+  links:
+    - endpoints: ["frr1:eth1", "vjunos1:eth1"]

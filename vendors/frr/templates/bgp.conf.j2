@@ -1,0 +1,38 @@
+! FRR BGP Configuration Template
+! ================================
+! Variables:
+!   {{ hostname }}     - Node hostname
+!   {{ router_id }}    - BGP Router ID (loopback IP)
+!   {{ local_as }}     - Local AS number
+!   {{ neighbor_ip }}  - BGP neighbor IP
+!   {{ remote_as }}    - Remote AS number
+!   {{ loopback_ip }}  - Loopback interface IP (/32)
+!   {{ p2p_ip }}       - P2P interface IP (/30)
+!   {{ p2p_interface }} - P2P interface name (e.g., eth1)
+
+frr version 10.3.1
+frr defaults traditional
+hostname {{ hostname }}
+no ipv6 forwarding
+!
+interface {{ p2p_interface }}
+ ip address {{ p2p_ip }}
+exit
+!
+interface lo
+ ip address {{ loopback_ip }}
+exit
+!
+router bgp {{ local_as }}
+ bgp router-id {{ router_id }}
+ no bgp ebgp-requires-policy
+ neighbor {{ neighbor_ip }} remote-as {{ remote_as }}
+ !
+ address-family ipv4 unicast
+  network {{ loopback_ip }}
+  neighbor {{ neighbor_ip }} activate
+ exit-address-family
+exit
+!
+line vty
+!

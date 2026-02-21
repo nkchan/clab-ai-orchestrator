@@ -1,0 +1,31 @@
+[project]
+name = "mcp-bridge"
+version = "0.1.0"
+description = "MCP server for network lab automation with containerlab, FRR, and Junos"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "docker>=7.0.0",
+    "jinja2>=3.1.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+mcp-bridge = "mcp_bridge.server:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
