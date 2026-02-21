@@ -1,124 +1,205 @@
 #!/usr/bin/env bash
 # ============================================================
-# Clab AI Orchestrator - Ubuntu 24.04 Setup Script
+# Clab AI Orchestrator - Setup Script for Ubuntu 24.04
 # ============================================================
-# Usage: sudo bash setup/install.sh
+# Usage:
+#   sudo bash setup/install.sh          # Full setup
+#   sudo bash setup/install.sh --skip-vrnetlab  # Skip vJunos build
 # ============================================================
 set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
-info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+info()  { echo -e "${GREEN}[✓]${NC} $*"; }
+warn()  { echo -e "${YELLOW}[!]${NC} $*"; }
+error() { echo -e "${RED}[✗]${NC} $*" >&2; }
+step()  { echo -e "\n${BLUE}━━━ $* ━━━${NC}"; }
+
+SKIP_VRNETLAB=false
+for arg in "$@"; do
+    case "$arg" in
+        --skip-vrnetlab) SKIP_VRNETLAB=true ;;
+    esac
+done
+
+# ---- Resolve project root ----
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ---- Check root ----
 if [[ $EUID -ne 0 ]]; then
-    error "This script must be run as root (sudo)"
+    error "This script must be run with sudo"
+    echo "  sudo bash $0"
     exit 1
 fi
 
-# ---- Check Ubuntu 24.04 ----
+# ---- Check OS ----
 if ! grep -q "24.04" /etc/os-release 2>/dev/null; then
-    warn "This script is tested on Ubuntu 24.04. Your OS may differ."
+    warn "This script is designed for Ubuntu 24.04. Your OS may differ."
 fi
+
+SUDO_USER_NAME="${SUDO_USER:-$USER}"
+
+echo ""
+echo "╔══════════════════════════════════════════════════╗"
+echo "║   Clab AI Orchestrator - Environment Setup      ║"
+echo "╠══════════════════════════════════════════════════╣"
+echo "║  Target: Ubuntu 24.04                           ║"
+echo "║  User:   $SUDO_USER_NAME"
+echo "║  Root:   $PROJECT_ROOT"
+echo "╚══════════════════════════════════════════════════╝"
+echo ""
 
 # ============================================================
 # 1. Docker
 # ============================================================
-info "=== Step 1: Installing Docker ==="
+step "Step 1/5: Docker"
+
 if command -v docker &>/dev/null; then
-    info "Docker is already installed: $(docker --version)"
+    info "Docker already installed: $(docker --version)"
 else
-    apt-get update
-    apt-get install -y ca-certificates curl gnupg
-    install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    chmod a+r /etc/apt/keyrings/docker.gpg
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-      https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      tee /etc/apt/sources.list.d/docker.list > /dev/null
-    apt-get update
-    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    info "Docker installed successfully."
+    info "Installing Docker..."
+    apt-get update -qq
+    apt-get install -y -qq docker.io docker-compose-v2 > /dev/null
+    systemctl enable --now docker
+    info "Docker installed: $(docker --version)"
 fi
 
-# Add current user to docker group
-SUDO_USER_NAME="${SUDO_USER:-$USER}"
-if ! groups "$SUDO_USER_NAME" | grep -q docker; then
+# Ensure user is in docker group
+if ! groups "$SUDO_USER_NAME" 2>/dev/null | grep -q docker; then
     usermod -aG docker "$SUDO_USER_NAME"
-    info "Added $SUDO_USER_NAME to docker group (re-login required for effect)."
+    info "Added $SUDO_USER_NAME to docker group (re-login required)"
+else
+    info "User $SUDO_USER_NAME is already in docker group"
 fi
 
 # ============================================================
 # 2. Containerlab
 # ============================================================
-info "=== Step 2: Installing Containerlab ==="
+step "Step 2/5: Containerlab"
+
 if command -v clab &>/dev/null; then
-    info "Containerlab is already installed: $(clab version | head -1)"
+    CLAB_VER=$(clab version 2>/dev/null | grep -oP 'version:\s*\K\S+' || echo "unknown")
+    info "Containerlab already installed: $CLAB_VER"
 else
-    bash -c "$(curl -sL https://get.containerlab.dev)"
-    info "Containerlab installed successfully."
+    info "Installing containerlab..."
+    bash -c "$(curl -sL https://get.containerlab.dev)" > /dev/null 2>&1
+    info "Containerlab installed: $(clab version 2>/dev/null | grep -oP 'version:\s*\K\S+' || echo 'done')"
 fi
 
 # ============================================================
-# 3. FRR Container Image
+# 3. FRR Image
 # ============================================================
+step "Step 3/5: FRR Container Image"
+
 FRR_IMAGE="${FRR_IMAGE:-quay.io/frrouting/frr:10.3.1}"
-info "=== Step 3: Pulling FRR image ($FRR_IMAGE) ==="
-docker pull "$FRR_IMAGE"
-info "FRR image pulled successfully."
+
+if docker image inspect "$FRR_IMAGE" &>/dev/null; then
+    info "FRR image already exists: $FRR_IMAGE"
+else
+    info "Pulling $FRR_IMAGE ..."
+    docker pull "$FRR_IMAGE"
+    info "FRR image pulled"
+fi
 
 # ============================================================
-# 4. vrnetlab (for vJunos-router)
+# 4. vrnetlab (vJunos-router)
 # ============================================================
+step "Step 4/5: vrnetlab / vJunos-router"
+
 VRNETLAB_DIR="/opt/vrnetlab"
-info "=== Step 4: Setting up vrnetlab for vJunos-router ==="
-apt-get install -y make git qemu-system-x86
 
-if [[ -d "$VRNETLAB_DIR" ]]; then
-    info "vrnetlab directory already exists at $VRNETLAB_DIR"
-    cd "$VRNETLAB_DIR" && git pull
+if [[ "$SKIP_VRNETLAB" == "true" ]]; then
+    warn "Skipping vrnetlab (--skip-vrnetlab flag)"
 else
-    git clone https://github.com/hellt/vrnetlab.git "$VRNETLAB_DIR"
-fi
+    # Install build dependencies
+    apt-get install -y -qq make git qemu-system-x86 > /dev/null 2>&1
+    info "Build dependencies installed"
 
-# Check for vJunos image in images/ directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGES_DIR="${SCRIPT_DIR}/images"
-VJUNOS_QCOW=$(find "$IMAGES_DIR" -name "vJunos-router-*.qcow2" 2>/dev/null | head -1)
+    # Clone or update vrnetlab
+    if [[ -d "$VRNETLAB_DIR/.git" ]]; then
+        info "vrnetlab already cloned at $VRNETLAB_DIR"
+        cd "$VRNETLAB_DIR" && git pull --quiet
+    else
+        info "Cloning vrnetlab..."
+        git clone --quiet https://github.com/hellt/vrnetlab.git "$VRNETLAB_DIR"
+    fi
+    info "vrnetlab ready at $VRNETLAB_DIR"
 
-if [[ -n "$VJUNOS_QCOW" ]]; then
-    info "Found vJunos image: $VJUNOS_QCOW"
-    cp "$VJUNOS_QCOW" "$VRNETLAB_DIR/vjunos-router/"
-    cd "$VRNETLAB_DIR/vjunos-router"
-    make
-    info "vJunos-router Docker image built successfully."
-else
-    warn "No vJunos-router QCOW2 image found in $IMAGES_DIR"
-    warn "Please download vJunos-router-*.qcow2 from Juniper and place it in $IMAGES_DIR"
-    warn "Then re-run this script or manually build:"
-    warn "  cp <image>.qcow2 $VRNETLAB_DIR/vjunos-router/"
-    warn "  cd $VRNETLAB_DIR/vjunos-router && make"
+    # Look for vJunos QCOW2
+    IMAGES_DIR="${PROJECT_ROOT}/images"
+    VJUNOS_QCOW=$(find "$IMAGES_DIR" -name "vJunos-router-*.qcow2" 2>/dev/null | head -1)
+
+    if docker images | grep -q "vrnetlab/vr-vjunos"; then
+        info "vJunos Docker image already exists"
+    elif [[ -n "$VJUNOS_QCOW" ]]; then
+        info "Found QCOW2: $(basename "$VJUNOS_QCOW")"
+        info "Building Docker image (this takes 5-10 minutes)..."
+        cp "$VJUNOS_QCOW" "$VRNETLAB_DIR/vjunos-router/"
+        cd "$VRNETLAB_DIR/vjunos-router"
+        make 2>&1 | tail -5
+        info "vJunos Docker image built successfully"
+    else
+        warn "No vJunos-router QCOW2 found in $IMAGES_DIR"
+        warn "Download from https://support.juniper.net/ and place in:"
+        warn "  $IMAGES_DIR/vJunos-router-<version>.qcow2"
+        warn "Then re-run this script."
+    fi
 fi
 
 # ============================================================
-# 5. Python environment
+# 5. Python + mcp-bridge
 # ============================================================
-info "=== Step 5: Setting up Python environment ==="
-apt-get install -y python3 python3-pip python3-venv
+step "Step 5/5: Python & mcp-bridge"
 
-info ""
-info "============================================"
-info "  Setup complete!"
-info "============================================"
-info ""
-info "Next steps:"
-info "  1. Log out and back in (for docker group)"
-info "  2. Place vJunos QCOW2 in images/ if not done"
-info "  3. Deploy lab: sudo clab deploy -t labs/basic-bgp/topology.clab.yml"
-info ""
+apt-get install -y -qq python3 python3-pip python3-venv > /dev/null 2>&1
+info "Python3 installed: $(python3 --version)"
+
+MCP_DIR="${PROJECT_ROOT}/mcp-bridge"
+VENV_DIR="${MCP_DIR}/.venv"
+
+if [[ -d "$VENV_DIR" ]]; then
+    info "Python venv already exists at $VENV_DIR"
+else
+    info "Creating Python venv..."
+    sudo -u "$SUDO_USER_NAME" python3 -m venv "$VENV_DIR"
+    info "venv created"
+fi
+
+info "Installing mcp-bridge dependencies..."
+sudo -u "$SUDO_USER_NAME" "$VENV_DIR/bin/pip" install --quiet -r "$MCP_DIR/requirements.lock"
+sudo -u "$SUDO_USER_NAME" "$VENV_DIR/bin/pip" install --quiet -e "$MCP_DIR"
+info "mcp-bridge installed"
+
+# ============================================================
+# Summary
+# ============================================================
+echo ""
+echo "╔══════════════════════════════════════════════════╗"
+echo "║   ✅ Setup Complete!                            ║"
+echo "╠══════════════════════════════════════════════════╣"
+echo "║                                                 ║"
+echo "║  Docker:       $(docker --version | grep -oP 'Docker version \K[^,]+')"
+echo "║  Containerlab: $(clab version 2>/dev/null | grep -oP 'version:\s*\K\S+' || echo 'installed')"
+echo "║  FRR:          $FRR_IMAGE"
+echo "║  Python:       $(python3 --version | grep -oP '\d+\.\d+\.\d+')"
+echo "║  mcp-bridge:   $VENV_DIR"
+
+if docker images | grep -q "vrnetlab/vr-vjunos"; then
+    echo "║  vJunos:       ✅ Docker image ready"
+else
+    echo "║  vJunos:       ⚠️  QCOW2 image needed"
+fi
+
+echo "║                                                 ║"
+echo "╠══════════════════════════════════════════════════╣"
+echo "║  Next steps:                                    ║"
+echo "║  1. Log out & back in (docker group)            ║"
+echo "║  2. sudo clab deploy -t \\                      ║"
+echo "║       labs/basic-bgp/topology.clab.yml          ║"
+echo "╚══════════════════════════════════════════════════╝"
+echo ""
