@@ -1,20 +1,21 @@
 # MCP Bridge
 
-MCP (Model Context Protocol) server for operating containerlab / FRR / vJunos-router.
+MCP (Model Context Protocol) server for operating containerlab / FRR / FRR.
 
 ## Setup
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv if missing
+source $HOME/.local/bin/env  # Update PATH
+uv venv
+uv pip install -e ".[dev]"
 ```
 
 ## Run
 
 ```bash
 # STDIO mode
-mcp-bridge
+uv run mcp-bridge
 ```
 
 ## Available Tools
@@ -26,8 +27,8 @@ mcp-bridge
 | `clab_inspect` | Inspect node status |
 | `frr_show` | Execute show commands on FRR |
 | `frr_config` | Push configuration to FRR |
-| `junos_show` | Execute show commands on vJunos |
-| `junos_config` | Push configuration to vJunos |
+| `junos_show` | Execute show commands on Junos (Disabled) |
+| `junos_config` | Push configuration to Junos (Disabled) |
 
 ## Development
 

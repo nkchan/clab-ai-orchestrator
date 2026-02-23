@@ -1,32 +1,51 @@
 # ============================================================
-# docker-compose: mcp-bridge + development tools
+# docker-compose: Open WebUI for Clab AI Orchestrator
 # ============================================================
 # Usage:
-#   docker compose up -d        # Start mcp-bridge
-#   docker compose logs -f      # View logs
-#   docker compose down         # Stop
+#   export OPENROUTER_API_KEY="sk-or-v1-..."
+#   docker compose up -d
+#   docker compose logs -f
+#   docker compose down
 # ============================================================
 services:
   mcp-bridge:
     build:
       context: ./mcp-bridge
       dockerfile: Dockerfile
-    container_name: mcp-bridge
+    container_name: clab-mcp-bridge
     restart: unless-stopped
-    # Mount Docker socket for containerlab/docker operations
+    command: ["--sse"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./labs:/app/labs:ro
       - ./vendors:/app/vendors:ro
-    # STDIO mode: stdin/stdout for MCP communication
-    stdin_open: true
-    tty: true
     environment:
       - CLAB_HOST=${CLAB_HOST:-localhost}
       - PYTHONUNBUFFERED=1
     networks:
       - clab-net
 
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: clab-open-webui
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENAI_API_BASE_URL=https://openrouter.ai/api/v1
+      - OPENAI_API_KEY=${OPENROUTER_API_KEY}
+      - WEBUI_AUTH=False
+    volumes:
+      - open-webui-data:/app/backend/data
+      - ./setup/open_webui_mcp_client.py:/app/backend/open_webui/utils/mcp/client.py
+    networks:
+      - clab-net
+    depends_on:
+      - mcp-bridge
+
 networks:
   clab-net:
     driver: bridge
+
+volumes:
+  open-webui-data:

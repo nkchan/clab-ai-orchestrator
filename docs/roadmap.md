@@ -53,15 +53,15 @@ gantt
 > Deploy and operate a real lab on the server via MCP.
 
 ### 1.1 Environment Setup
-- [ ] Clone repo to lab server
-- [ ] Run `sudo bash setup/install.sh`
-- [ ] Build vJunos Docker image via vrnetlab
-- [ ] Deploy basic-bgp lab with `sudo clab deploy`
-- [ ] Verify BGP Established
+- [x] Clone repo to lab server
+- [x] Run `sudo bash setup/install.sh`
+- [x] Build vJunos Docker image via vrnetlab (Deferred to Expansion Phase)
+- [x] Deploy basic-bgp lab with `sudo clab deploy`
+- [x] Verify BGP Established
 
 ### 1.2 mcp-bridge Validation
 - [ ] Install and start mcp-bridge
-- [ ] Test each tool (clab_inspect, frr_show, junos_show)
+- [ ] Test each tool (clab_inspect, frr_show, frr_config)
 - [ ] Test Docker container execution (`docker compose up`)
 
 ### 1.3 Open WebUI Integration
@@ -117,6 +117,7 @@ gantt
 ### 3.3 New Vendor Support
 - [ ] Arista cEOS (eAPI parser + templates)
 - [ ] Nokia SR Linux
+- [ ] AMD CPU support for vJunos (rebuild via vrnetlab with nested virt options)
 - [ ] Plugin architecture for `vendors/`
 
 ### 3.4 Advanced Features

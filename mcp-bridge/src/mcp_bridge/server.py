@@ -7,6 +7,12 @@ Runs as a STDIO-based MCP server.
 import asyncio
 import logging
 
+import sys
+import uvicorn
+from starlette.applications import Starlette
+from starlette.routing import Route
+from mcp.server.sse import SseServerTransport
+
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
@@ -225,11 +231,31 @@ async def run():
     async with stdio_server() as (read_stream, write_stream):
         await app.run(read_stream, write_stream, app.create_initialization_options())
 
+sse = SseServerTransport("/messages")
+
+class HandleSSE:
+    async def __call__(self, scope, receive, send):
+        async with sse.connect_sse(scope, receive, send) as streams:
+            await app.run(streams[0], streams[1], app.create_initialization_options())
+
+class HandleMessages:
+    async def __call__(self, scope, receive, send):
+        await sse.handle_post_message(scope, receive, send)
+
+starlette_app = Starlette(routes=[
+    Route("/sse", endpoint=HandleSSE()),
+    Route("/messages", endpoint=HandleMessages(), methods=["POST"]),
+])
 
 def main():
     """Entry point."""
     logging.basicConfig(level=logging.INFO)
-    asyncio.run(run())
+    if "--sse" in sys.argv:
+        port = 9005
+        logger.info(f"Starting SSE server on port {port}")
+        uvicorn.run(starlette_app, host="0.0.0.0", port=port)
+    else:
+        asyncio.run(run())
 
 
 if __name__ == "__main__":
