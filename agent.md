@@ -18,6 +18,21 @@ This project is **publicly released as OSS on github.com** — always maintain q
   - **Existing MCPs**: `docker-mcp` (container operations), `ssh-mcp` (remote server operations)
   - **Custom MCP (`mcp-bridge`)**: Mediates between vendor-specific logic and existing MCPs.
 
+### Vendor Naming Reference (IMPORTANT)
+
+> **Source of truth for kind names**: https://containerlab.dev/manual/kinds/
+> Always verify kind names against this page before writing topology files.
+
+| Item | FRR | vJunos-router |
+|------|-----|---------------|
+| **clab kind** | `linux` | `juniper_vjunosrouter` |
+| **Docker image** | `quay.io/frrouting/frr:10.3.1` | `vrnetlab/juniper_vjunos-router:25.4R1.12` |
+| **vrnetlab build dir** | N/A | `/opt/vrnetlab/juniper/vjunosrouter/` |
+| **Container name** | `clab-<lab>-frr1` | `clab-<lab>-vjunos1` |
+| **CLI access** | `docker exec <c> vtysh` | `docker exec <c> cli` |
+| **Config mode** | `vtysh -c "conf t"` | `cli configure` |
+| **clab kind docs** | [linux](https://containerlab.dev/manual/kinds/linux/) | [juniper_vjunosrouter](https://containerlab.dev/manual/kinds/vr-vjunosrouter/) |
+
 ## 📂 Repository Structure
 - `mcp-bridge/`: Custom MCP server for external communication.
 - `vendors/`: Per-vendor (`junos/`, `frr/`) parsers and templates.

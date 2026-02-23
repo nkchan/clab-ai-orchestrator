@@ -137,7 +137,7 @@ else
     IMAGES_DIR="${PROJECT_ROOT}/images"
     VJUNOS_QCOW=$(find "$IMAGES_DIR" -name "vJunos-router-*.qcow2" 2>/dev/null | head -1)
 
-    if docker images --format '{{.Repository}}' | grep -q "vrnetlab/vr-vjunosrouter"; then
+    if docker images --format '{{.Repository}}' | grep -q "vrnetlab/juniper_vjunos-router"; then
         info "vJunos Docker image already exists"
     elif [[ -n "$VJUNOS_QCOW" ]]; then
         info "Found QCOW2: $(basename "$VJUNOS_QCOW")"
@@ -155,28 +155,25 @@ else
 fi
 
 # ============================================================
-# 5. Python + mcp-bridge
+# 5. uv & mcp-bridge
 # ============================================================
-step "Step 5/5: Python & mcp-bridge"
+step "Step 5/5: uv & mcp-bridge"
 
-apt-get install -y -qq python3 python3-pip python3-venv > /dev/null 2>&1
-info "Python3 installed: $(python3 --version)"
-
-MCP_DIR="${PROJECT_ROOT}/mcp-bridge"
-VENV_DIR="${MCP_DIR}/.venv"
-
-if [[ -d "$VENV_DIR" ]]; then
-    info "Python venv already exists at $VENV_DIR"
+if command -v uv &>/dev/null; then
+    info "uv already installed: $(uv --version)"
 else
-    info "Creating Python venv..."
-    sudo -u "$SUDO_USER_NAME" python3 -m venv "$VENV_DIR"
-    info "venv created"
+    info "Installing uv via curl..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    # Ensure uv is in the path for the rest of the script if installing as root
+    export PATH="$HOME/.local/bin:$PATH"
+    info "uv installed"
 fi
 
-info "Installing mcp-bridge dependencies..."
-sudo -u "$SUDO_USER_NAME" "$VENV_DIR/bin/pip" install --quiet -r "$MCP_DIR/requirements.lock"
-sudo -u "$SUDO_USER_NAME" "$VENV_DIR/bin/pip" install --quiet -e "$MCP_DIR"
-info "mcp-bridge installed"
+MCP_DIR="${PROJECT_ROOT}/mcp-bridge"
+
+info "Setting up mcp-bridge with uv..."
+sudo -i -u "$SUDO_USER_NAME" bash -c "cd \"$MCP_DIR\" && uv venv && uv pip install --quiet -e \".[dev]\""
+info "mcp-bridge installed via uv"
 
 # ============================================================
 # Summary
@@ -189,10 +186,10 @@ echo "║                                                 ║"
 echo "║  Docker:       $(docker --version | grep -oP 'Docker version \K[^,]+')"
 echo "║  Containerlab: $(clab version 2>/dev/null | grep -oP 'version:\s*\K\S+' || echo 'installed')"
 echo "║  FRR:          $FRR_IMAGE"
-echo "║  Python:       $(python3 --version | grep -oP '\d+\.\d+\.\d+')"
-echo "║  mcp-bridge:   $VENV_DIR"
+echo "║  Python:       uv managed"
+echo "║  mcp-bridge:   $MCP_DIR/.venv"
 
-if docker images --format '{{.Repository}}' | grep -q "vrnetlab/vr-vjunosrouter"; then
+if docker images --format '{{.Repository}}' | grep -q "vrnetlab/juniper_vjunos-router"; then
     echo "║  vJunos:       ✅ Docker image ready"
 else
     echo "║  vJunos:       ⚠️  QCOW2 image needed"

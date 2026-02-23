@@ -33,16 +33,12 @@ graph TB
 
 - Ubuntu 24.04
 - sudo privileges
-- NOS images (e.g., vJunos-router QCOW2 from [Juniper](https://www.juniper.net/))
 
 ### 1. Setup
 
 ```bash
 git clone https://github.com/<your-org>/clab-ai-orchestrator.git
 cd clab-ai-orchestrator
-
-# Place NOS images
-cp /path/to/vJunos-router-25.4R1.12.qcow2 images/
 
 # Run setup script
 sudo bash setup/install.sh
@@ -57,19 +53,21 @@ sudo clab deploy -t labs/basic-bgp/topology.clab.yml
 ### 3. Verify
 
 ```bash
-# FRR BGP status
+# FRR1 BGP status
 docker exec clab-basic-bgp-frr1 vtysh -c "show ip bgp summary"
 
-# vJunos BGP status
-docker exec clab-basic-bgp-vjunos1 cli show bgp summary
+# FRR2 BGP status
+docker exec clab-basic-bgp-frr2 vtysh -c "show ip bgp summary"
 ```
 
 ### 4. Start MCP Bridge
 
-```bash
 cd mcp-bridge
-pip install -e .
-mcp-bridge  # STDIO mode
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv if missing
+source $HOME/.local/bin/env  # Update PATH for the current shell
+uv venv
+uv pip install -e ".[dev]"
+uv run mcp-bridge  # STDIO mode
 ```
 
 Or run in Docker:
@@ -84,7 +82,7 @@ docker compose up -d
 ├── agent.md              # AI agent definition
 ├── setup/                # Setup scripts
 ├── labs/                 # Containerlab topology definitions
-│   └── basic-bgp/        # FRR + vJunos P2P BGP lab
+│   └── basic-bgp/        # FRR + FRR P2P BGP lab
 ├── mcp-bridge/           # MCP server (Python)
 │   └── src/mcp_bridge/
 │       ├── server.py      # Main server

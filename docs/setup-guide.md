@@ -45,16 +45,17 @@ sudo make
 ### 4. Verify
 ```bash
 docker images | grep vjunos
-# vrnetlab/vr-vjunos   25.4R1.12   ...
+# vrnetlab/juniper_vjunos-router   25.4R1.12   ...
 ```
 
 ## Setting Up mcp-bridge
 
 ```bash
 cd mcp-bridge
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Install uv if missing
+source $HOME/.local/bin/env  # Update PATH
+uv venv
+uv pip install -e ".[dev]"
 ```
 
 ## Smoke Test

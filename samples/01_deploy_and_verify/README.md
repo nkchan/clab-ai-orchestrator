@@ -69,7 +69,7 @@ sudo clab deploy -t labs/basic-bgp/topology.clab.yml
 | # |          Name            |   Kind    |  State  | IPv4 | IPv6 |
 +---+--------------------------+-----------+---------+------+------+
 | 1 | clab-basic-bgp-frr1      | linux     | running | ...  | ...  |
-| 2 | clab-basic-bgp-vjunos1   | juniper_vjunos | running | ...  | ...  |
+| 2 | clab-basic-bgp-vjunos1   | juniper_vjunosrouter | running | ...  | ...  |
 +---+--------------------------+-----------+---------+------+------+
 ```
 

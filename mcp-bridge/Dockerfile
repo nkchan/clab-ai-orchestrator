@@ -9,11 +9,9 @@ FROM python:3.12.8-slim-bookworm AS base
 
 # System deps required by some Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    docker.io \
+    docker.io curl sudo \
+    && curl -sL https://get.containerlab.dev | bash \
     && rm -rf /var/lib/apt/lists/*
-
-# Non-root user
-RUN groupadd -r mcp && useradd -r -g mcp -d /app mcp
 
 WORKDIR /app
 
@@ -27,7 +25,5 @@ COPY src/ ./src/
 
 # Install package
 RUN pip install --no-cache-dir -e .
-
-USER mcp
 
 ENTRYPOINT ["mcp-bridge"]
