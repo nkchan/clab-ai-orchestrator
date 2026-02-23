@@ -60,17 +60,17 @@ gantt
 - [x] Verify BGP Established
 
 ### 1.2 mcp-bridge Validation
-- [ ] Install and start mcp-bridge
-- [ ] Test each tool (clab_inspect, frr_show, frr_config)
-- [ ] Test Docker container execution (`docker compose up`)
+- [x] Install and start mcp-bridge
+- [x] Test each tool (clab_inspect, frr_show, frr_config)
+- [x] Test Docker container execution (`docker compose up`)
 
 ### 1.3 Open WebUI Integration
-- [ ] Deploy Open WebUI on lab server
-- [ ] Register mcp-bridge as MCP server
-- [ ] Verify natural language → MCP tool invocation works
+- [x] Deploy Open WebUI on lab server
+- [x] Register mcp-bridge as MCP server
+- [x] Verify natural language → MCP tool invocation works
 
 ### 🏁 Phase 1 Completion Criteria
-- [ ] "Deploy lab and check BGP status" works end-to-end via Open WebUI
+- [x] "Deploy lab and check BGP status" works end-to-end via Open WebUI
 
 ---
 
