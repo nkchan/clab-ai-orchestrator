@@ -19,6 +19,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./labs:/app/labs:ro
       - ./vendors:/app/vendors:ro
+      - ./agent.md:/app/agent.md:ro
     environment:
       - CLAB_HOST=${CLAB_HOST:-localhost}
       - PYTHONUNBUFFERED=1
