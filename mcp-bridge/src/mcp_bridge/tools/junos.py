@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class JunosTools:
-    """Junos management tools via CLI."""
+    """Junos management tools via CLI over SSH."""
 
     async def show(self, container_name: str, command: str, fmt: str = "text") -> str:
         """Execute a show command on a vJunos node.
@@ -29,9 +29,9 @@ class JunosTools:
         if fmt == "json" and "| display json" not in command:
             command = f"{command} | display json"
 
-        cli_cmd = f"cli -c {shlex.quote(command)}"
+        ssh_cmd = f"sshpass -p 'admin@123' ssh -o StrictHostKeyChecking=no admin@127.0.0.1 {shlex.quote(command)}"
         logger.info(f"Junos show on {container_name}: {command}")
-        return await docker_exec(container_name, cli_cmd, timeout=60)
+        return await docker_exec(container_name, ssh_cmd, timeout=60)
 
     async def configure(self, container_name: str, config_commands: list[str]) -> str:
         """Push set-style configuration to a vJunos node.
@@ -43,17 +43,17 @@ class JunosTools:
         Returns:
             Configuration output.
         """
-        # Build a single CLI session with configure/commit
+        # Build commands string separated by newlines to execute over single SSH session
         commands = (
             ["configure"]
             + config_commands
             + ["commit and-quit"]
         )
-
-        # Join commands for a single cli invocation
-        combined = " && ".join(f"cli -c {shlex.quote(cmd)}" for cmd in commands)
+        combined_cmds = "\n".join(commands)
 
         logger.info(f"Junos config on {container_name}: {len(config_commands)} commands")
-        result = await docker_exec(container_name, f"sh -c {shlex.quote(combined)}", timeout=120)
+        # Pipe combined commands into SSH connection
+        ssh_cmd = f"echo {shlex.quote(combined_cmds)} | sshpass -p 'admin@123' ssh -o StrictHostKeyChecking=no admin@127.0.0.1 cli"
+        result = await docker_exec(container_name, ssh_cmd, timeout=120)
 
         return f"Configuration committed:\n{result}"

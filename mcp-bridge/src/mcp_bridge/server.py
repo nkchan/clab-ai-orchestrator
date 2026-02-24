@@ -15,11 +15,12 @@ from mcp.server.sse import SseServerTransport
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+from mcp.types import TextContent, Tool, Prompt, GetPromptResult, PromptMessage
 
 from mcp_bridge.tools.clab import ClabTools
 from mcp_bridge.tools.frr import FrrTools
 from mcp_bridge.tools.junos import JunosTools
+from mcp_bridge.tools.report import ReportTools
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,45 @@ app = Server("mcp-bridge")
 clab_tools = ClabTools()
 frr_tools = FrrTools()
 junos_tools = JunosTools()
+report_tools = ReportTools()
 
+import pathlib
+
+@app.list_prompts()
+async def list_prompts() -> list[Prompt]:
+    """List available prompts."""
+    return [
+        Prompt(
+            name="agent",
+            description="Autonomous Investigation Workflow guidelines for ClabAgent",
+            arguments=[],
+        )
+    ]
+
+@app.get_prompt()
+async def get_prompt(name: str, arguments: dict | None) -> GetPromptResult:
+    """Get a specific prompt by name."""
+    if name != "agent":
+        raise ValueError(f"Unknown prompt: {name}")
+
+    agent_path = pathlib.Path("/app/agent.md")
+    if agent_path.exists():
+        content = agent_path.read_text(encoding="utf-8")
+    else:
+        content = "Error: agent.md not found in the container at /app/agent.md_ Please ensure it is mounted."
+
+    return GetPromptResult(
+        description="Autonomous Investigation Workflow guidelines",
+        messages=[
+            PromptMessage(
+                role="user",
+                content=TextContent(
+                    type="text",
+                    text=content
+                )
+            )
+        ]
+    )
 
 @app.list_tools()
 async def list_tools() -> list[Tool]:
@@ -106,6 +145,12 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "Show command to execute (e.g., 'show ip bgp summary')",
                     },
+                    "format": {
+                        "type": "string",
+                        "enum": ["text", "json"],
+                        "description": "Output format (default: text)",
+                        "default": "text",
+                    },
                 },
                 "required": ["container_name", "command"],
             },
@@ -173,6 +218,25 @@ async def list_tools() -> list[Tool]:
                 "required": ["container_name", "config_commands"],
             },
         ),
+        # --- Report tools ---
+        Tool(
+            name="save_report",
+            description="Save a markdown report to the local filesystem.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Filename of the report (e.g., 'bgp_outage_cause.md')",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Markdown content to save",
+                    },
+                },
+                "required": ["filename", "content"],
+            },
+        ),
     ]
 
 
@@ -199,6 +263,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             result = await frr_tools.show(
                 arguments["container_name"],
                 arguments["command"],
+                arguments.get("format", "text"),
             )
         elif name == "frr_config":
             result = await frr_tools.configure(
@@ -216,8 +281,13 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 arguments["container_name"],
                 arguments["config_commands"],
             )
+        elif name == "save_report":
+            result = await report_tools.save(
+                arguments["filename"],
+                arguments["content"],
+            )
         else:
-            result = f"Unknown tool: {name}"
+            raise ValueError(f"Unknown tool: {name}")
 
         return [TextContent(type="text", text=str(result))]
 

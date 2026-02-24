@@ -79,18 +79,18 @@ gantt
 > Enable autonomous fault investigation and repair by AI agents.
 
 ### 2.1 Autonomous Investigation Workflow
-- [ ] Implement Plan → Act → Reflect → Document pattern
-- [ ] Investigation logic: L1 → L2 → L3 → BGP staged checks
-- [ ] Embed `agent.md` workflow into mcp-bridge prompts
+- [x] Implement Plan → Act → Reflect → Document pattern
+- [x] Investigation logic: L1 → L2 → L3 → BGP staged checks
+- [x] Embed `agent.md` workflow into mcp-bridge prompts
 - [ ] Verify samples/02 scenario runs autonomously
 
 ### 2.2 Parser Expansion
-- [ ] FRR: `show ip bgp neighbor`, `show ip ospf neighbor`, `show interface` parsers
-- [ ] Junos: `show bgp neighbor`, `show ospf neighbor`, `show interfaces` parsers
-- [ ] Anomaly detection logic (alert when state ≠ Established, etc.)
+- [x] FRR: `show ip bgp neighbor`, `show ip ospf neighbor`, `show interface` parsers
+- [x] Junos: `show bgp neighbor`, `show ospf neighbor`, `show interfaces` parsers
+- [x] Anomaly detection logic (alert when state ≠ Established, etc.)
 
 ### 2.3 Automated Evidence Generation
-- [ ] Auto-generate verification reports as Markdown
+- [x] Auto-generate verification reports as Markdown
 - [ ] Auto-generate Mermaid topology diagrams from topology.clab.yml
 - [ ] Before/After diff reports
 
@@ -117,7 +117,7 @@ gantt
 ### 3.3 New Vendor Support
 - [ ] Arista cEOS (eAPI parser + templates)
 - [ ] Nokia SR Linux
-- [ ] AMD CPU support for vJunos (rebuild via vrnetlab with nested virt options)
+- [x] AMD CPU support for vJunos (rebuild via vrnetlab with nested virt options)
 - [ ] Plugin architecture for `vendors/`
 
 ### 3.4 Advanced Features

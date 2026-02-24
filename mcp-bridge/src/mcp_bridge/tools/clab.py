@@ -46,22 +46,22 @@ class ClabTools:
         return await run_command(cmd, timeout=120)
 
     async def inspect(self, topology_file: str | None = None, name: str | None = None) -> str:
-        """Inspect a running containerlab topology.
+        """Inspect running containerlab nodes.
+
+        Uses 'docker ps' to discover running clab containers since
+        containerlab state lives on the host, not inside the mcp-bridge
+        container.
 
         Args:
-            topology_file: Path to the topology YAML file (optional).
-            name: Lab name to inspect (optional).
+            topology_file: Unused (kept for API compat). Ignored.
+            name: Lab name filter (e.g., 'vjunos-test' matches 'clab-vjunos-test-*').
 
         Returns:
-            Inspection output with node status.
+            Table of running containerlab containers.
         """
-        cmd = "sudo clab inspect"
-        if topology_file:
-            cmd += f" -t {shlex.quote(topology_file)}"
-        elif name:
-            cmd += f" --name {shlex.quote(name)}"
-        else:
-            cmd += " --all"
+        cmd = "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' --filter 'label=clab-node-name'"
+        if name:
+            cmd += f" --filter 'name=clab-{shlex.quote(name)}'"
 
-        logger.info("Inspecting topology")
+        logger.info(f"Inspecting clab containers (filter: {name or 'all'})")
         return await run_command(cmd)

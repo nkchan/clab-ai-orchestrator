@@ -29,7 +29,7 @@ This project is **publicly released as OSS on github.com** — always maintain q
 | **Docker image** | `quay.io/frrouting/frr:10.3.1` | `vrnetlab/juniper_vjunos-router:25.4R1.12` |
 | **vrnetlab build dir** | N/A | `/opt/vrnetlab/juniper/vjunosrouter/` |
 | **Container name** | `clab-<lab>-frr1` | `clab-<lab>-vjunos1` |
-| **CLI access** | `docker exec <c> vtysh` | `docker exec <c> cli` |
+| **CLI access** | `docker exec <c> vtysh` | SSH via `sshpass` inside container |
 | **Config mode** | `vtysh -c "conf t"` | `cli configure` |
 | **clab kind docs** | [linux](https://containerlab.dev/manual/kinds/linux/) | [juniper_vjunosrouter](https://containerlab.dev/manual/kinds/vr-vjunosrouter/) |
 
@@ -41,17 +41,30 @@ This project is **publicly released as OSS on github.com** — always maintain q
 
 ## 📝 Operating Rules
 ### 1. State-First
-Always verify the environment's "ground truth" via `clab inspect` etc. before and after changes.
+Always verify the environment's "ground truth" via `clab_inspect` (returns running clab containers) before and after changes.
 
-### 2. Docs-as-Code
+### 2. MCP Tool Usage
+- **`clab_inspect`**: Lists running containerlab containers. Use `name` to filter (e.g., `name="vjunos-test"` → shows `clab-vjunos-test-*` containers). Always start here to discover container names.
+- **`junos_show`**: Execute show commands on vJunos nodes. Requires the full container name (e.g., `clab-vjunos-test-vjunos1`). Supports `format="json"` for structured output.
+- **`frr_show`**: Execute show commands on FRR nodes. Requires the full container name (e.g., `clab-vjunos-test-frr1`). Supports `format="json"` for structured output.
+- **`save_report`**: Save a Markdown report to the filesystem. **You are explicitly authorized to use this tool.** Use it to save investigation results (e.g., `filename="bgp_investigation.md"`).
+
+> **IMPORTANT**: vrnetlab containers (vJunos) often show `unhealthy` in Docker status — this is a known Docker healthcheck limitation and does NOT mean the Junos OS inside is down. **Always proceed to call `junos_show` regardless of the Docker health status.** The Junos CLI is accessible even when Docker reports unhealthy.
+
+**Recommended investigation flow:**
+1. `clab_inspect` → discover container names
+2. `junos_show` / `frr_show` → run show commands (`show interfaces terse`, `show bgp summary`, etc.)
+3. `save_report` → save findings as a Markdown report
+
+### 3. Docs-as-Code
 - When creating new tools or lab configs, always create or update related documentation in `docs/`.
 - README prioritizes "ease of adoption" — clearly document prerequisites and setup steps.
 
-### 3. Vendor-Specific Conventions
+### 4. Vendor-Specific Conventions
 - **FRR**: Use `vtysh` and Linux kernel commands.
 - **Junos**: Prefer structured data (JSON via `| display json`).
 
-### 4. Distributed Environment & Verification
+### 5. Distributed Environment & Verification
 Always be aware of remote execution and perform `Reflect & Verify` (self-validation) after every operation.
 
 ## 🚦 Workflow Patterns
