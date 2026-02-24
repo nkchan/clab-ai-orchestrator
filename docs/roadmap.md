@@ -117,7 +117,7 @@ gantt
 ### 3.3 New Vendor Support
 - [ ] Arista cEOS (eAPI parser + templates)
 - [ ] Nokia SR Linux
-- [ ] AMD CPU support for vJunos (rebuild via vrnetlab with nested virt options)
+- [x] AMD CPU support for vJunos (rebuild via vrnetlab with nested virt options)
 - [ ] Plugin architecture for `vendors/`
 
 ### 3.4 Advanced Features
