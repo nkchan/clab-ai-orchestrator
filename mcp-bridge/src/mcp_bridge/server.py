@@ -20,6 +20,7 @@ from mcp.types import TextContent, Tool, Prompt, GetPromptResult, PromptMessage
 from mcp_bridge.tools.clab import ClabTools
 from mcp_bridge.tools.frr import FrrTools
 from mcp_bridge.tools.junos import JunosTools
+from mcp_bridge.tools.report import ReportTools
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ app = Server("mcp-bridge")
 clab_tools = ClabTools()
 frr_tools = FrrTools()
 junos_tools = JunosTools()
+report_tools = ReportTools()
 
 import pathlib
 
@@ -216,6 +218,25 @@ async def list_tools() -> list[Tool]:
                 "required": ["container_name", "config_commands"],
             },
         ),
+        # --- Report tools ---
+        Tool(
+            name="save_report",
+            description="Save a markdown report to the local filesystem.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Filename of the report (e.g., 'bgp_outage_cause.md')",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Markdown content to save",
+                    },
+                },
+                "required": ["filename", "content"],
+            },
+        ),
     ]
 
 
@@ -260,8 +281,13 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 arguments["container_name"],
                 arguments["config_commands"],
             )
+        elif name == "save_report":
+            result = await report_tools.save(
+                arguments["filename"],
+                arguments["content"],
+            )
         else:
-            result = f"Unknown tool: {name}"
+            raise ValueError(f"Unknown tool: {name}")
 
         return [TextContent(type="text", text=str(result))]
 

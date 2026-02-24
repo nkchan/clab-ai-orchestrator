@@ -20,6 +20,7 @@ services:
       - ./labs:/app/labs:ro
       - ./vendors:/app/vendors:ro
       - ./agent.md:/app/agent.md:ro
+      - ./reports:/app/reports
     environment:
       - CLAB_HOST=${CLAB_HOST:-localhost}
       - PYTHONUNBUFFERED=1
