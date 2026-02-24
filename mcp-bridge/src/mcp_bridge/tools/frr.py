@@ -11,12 +11,13 @@ logger = logging.getLogger(__name__)
 class FrrTools:
     """FRR management tools via vtysh."""
 
-    async def show(self, container_name: str, command: str) -> str:
+    async def show(self, container_name: str, command: str, fmt: str = "text") -> str:
         """Execute a show command on an FRR node.
 
         Args:
             container_name: Docker container name.
             command: Show command (e.g., 'show ip bgp summary').
+            fmt: Output format - 'text' or 'json'.
 
         Returns:
             Command output.
@@ -24,6 +25,9 @@ class FrrTools:
         # Ensure command starts with 'show' for safety
         if not command.strip().startswith("show"):
             return "Error: Only 'show' commands are allowed via frr_show. Use frr_config for configuration."
+
+        if fmt == "json" and not command.strip().endswith("json"):
+            command = f"{command} json"
 
         vtysh_cmd = f"vtysh -c {shlex.quote(command)}"
         logger.info(f"FRR show on {container_name}: {command}")

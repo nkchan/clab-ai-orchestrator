@@ -143,6 +143,12 @@ async def list_tools() -> list[Tool]:
                         "type": "string",
                         "description": "Show command to execute (e.g., 'show ip bgp summary')",
                     },
+                    "format": {
+                        "type": "string",
+                        "enum": ["text", "json"],
+                        "description": "Output format (default: text)",
+                        "default": "text",
+                    },
                 },
                 "required": ["container_name", "command"],
             },
@@ -236,6 +242,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             result = await frr_tools.show(
                 arguments["container_name"],
                 arguments["command"],
+                arguments.get("format", "text"),
             )
         elif name == "frr_config":
             result = await frr_tools.configure(
