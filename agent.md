@@ -49,6 +49,13 @@ Always verify the environment's "ground truth" via `clab_inspect` (returns runni
 - **`frr_show`**: Execute show commands on FRR nodes. Requires the full container name (e.g., `clab-vjunos-test-frr1`). Supports `format="json"` for structured output.
 - **`save_report`**: Save a Markdown report to the filesystem. **You are explicitly authorized to use this tool.** Use it to save investigation results (e.g., `filename="bgp_investigation.md"`).
 
+> **IMPORTANT**: vrnetlab containers (vJunos) often show `unhealthy` in Docker status — this is a known Docker healthcheck limitation and does NOT mean the Junos OS inside is down. **Always proceed to call `junos_show` regardless of the Docker health status.** The Junos CLI is accessible even when Docker reports unhealthy.
+
+**Recommended investigation flow:**
+1. `clab_inspect` → discover container names
+2. `junos_show` / `frr_show` → run show commands (`show interfaces terse`, `show bgp summary`, etc.)
+3. `save_report` → save findings as a Markdown report
+
 ### 3. Docs-as-Code
 - When creating new tools or lab configs, always create or update related documentation in `docs/`.
 - README prioritizes "ease of adoption" — clearly document prerequisites and setup steps.
