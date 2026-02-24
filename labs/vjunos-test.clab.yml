@@ -5,4 +5,4 @@ topology:
       kind: juniper_vjunosrouter
       image: vrnetlab/juniper_vjunos-router:25.4R1.12
       binds:
-        - ../vendors/junos/init.conf:/init.conf
+        - /home/nkchan/clab-ai-orchestrator/vendors/junos/init.conf:/init.conf
