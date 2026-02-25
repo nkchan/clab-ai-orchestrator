@@ -13,27 +13,37 @@ class JunosTools:
     """Junos management tools via SSH."""
 
     async def _run_ssh_command(self, container_name: str, command: str) -> str:
-        """Helper to run command over paramiko SSH."""
-        # Get container IP
-        ip_cmd = f"docker inspect -f '{{{{range.NetworkSettings.Networks}}}}{{{{.IPAddress}}}}{{{{end}}}}' {shlex.quote(container_name)}"
-        ip = (await run_command(ip_cmd)).strip()
-        if not ip:
-            return f"Error: Could not find IP for container {container_name}"
-
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        """Helper to run command over docker exec telnet to bypass SSH failure."""
+        cmd_wrapper = f"(echo 'cli'; sleep 1; echo {shlex.quote(command)}; sleep 1) | telnet 127.0.0.1 5000"
+        
+        docker_cmd = f"docker exec -i {shlex.quote(container_name)} sh -c {shlex.quote(cmd_wrapper)}"
+        
         try:
-            client.connect(hostname=ip, username="admin", password="admin@123", timeout=10)
-            stdin, stdout, stderr = client.exec_command(command)
-            err = stderr.read().decode()
-            out = stdout.read().decode()
-            if err:
-                logger.warning(f"SSH stderr: {err}")
-            return out if out else err
+            out = await run_command(docker_cmd)
+            # Remove the telnet connection messages and CLI prompt noise
+            lines = out.split("\n")
+            filtered_lines = []
+            capture = False
+            for line in lines:
+                if line.strip() == command.strip():
+                    capture = True
+                    continue
+                if line.strip() == "cli" or line.strip() == "Password:Connection closed by foreign host." or line.strip().startswith("Trying 127.0.0.1") or line.strip().startswith("Connected to") or line.strip().startswith("Escape character is"):
+                    continue
+                if capture:
+                    # stop capturing if we hit another prompt
+                    if line.strip().startswith("root>") or line.strip().startswith("root@"):
+                        capture = False
+                        break
+                    filtered_lines.append(line)
+            
+            # If nothing was captured via exact match, fallback to just returning all but prompt
+            if not filtered_lines:
+                return "\n".join([l for l in lines if not any(p in l for p in ["Trying 127.0.0.1", "Connected to", "Escape character", "login:", "Password:", "Connection closed by foreign host"])])
+            
+            return "\n".join(filtered_lines).strip()
         except Exception as e:
-            return f"SSH connection failed: {str(e)}"
-        finally:
-            client.close()
+            return f"Telnet connection failed: {str(e)}"
 
     async def show(self, container_name: str, command: str, fmt: str = "text") -> str:
         """Execute a show command on a vJunos node."""
