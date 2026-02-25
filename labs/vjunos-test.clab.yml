@@ -4,3 +4,14 @@ topology:
     vjunos1:
       kind: juniper_vjunosrouter
       image: vrnetlab/juniper_vjunos-router:25.4R1.12
+      startup-config: configs/vjunos1-bgp.conf
+
+    frr1:
+      kind: linux
+      image: quay.io/frrouting/frr:10.3.1
+      binds:
+        - configs/frr1-test/daemons:/etc/frr/daemons
+        - configs/frr1-test/frr.conf:/etc/frr/frr.conf
+
+  links:
+    - endpoints: ["vjunos1:ge-0.0.0", "frr1:eth1"]
