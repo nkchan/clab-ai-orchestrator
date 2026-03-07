@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class JunosTools:
-    """Junos management tools via SSH."""
+    """Junos management tools via CLI over Telnet (bypassing SSH)."""
 
     async def _run_ssh_command(self, container_name: str, command: str) -> str:
         """Helper to run command over docker exec telnet to bypass SSH failure."""
@@ -85,11 +85,23 @@ class JunosTools:
         return await self._run_ssh_command(container_name, command)
 
     async def configure(self, container_name: str, config_commands: list[str]) -> str:
-        """Push set-style configuration to a vJunos node."""
+        """Push set-style configuration to a vJunos node.
+
+        Args:
+            container_name: Docker container name.
+            config_commands: List of set-style commands (e.g., ['set protocols bgp ...']).
+
+        Returns:
+            Configuration output.
+        """
         # Note: junos requires commands to be fed into 'cli' session or netconf.
         # paramiko exec_command does not start an interactive cli shell by default for commands, 
         # so we pipe them into 'cli' just like before.
-        commands = ["configure"] + config_commands + ["commit and-quit"]
+        commands = (
+            ["configure"]
+            + config_commands
+            + ["commit and-quit"]
+        )
         combined_cmds = "\n".join(commands)
         
         logger.info(f"Junos config on {container_name}: {len(config_commands)} commands")
