@@ -1,0 +1,6 @@
+name: vjunos-test
+topology:
+  nodes:
+    vjunos1:
+      kind: juniper_vjunosrouter
+      image: vrnetlab/juniper_vjunos-router:25.4R1.12
